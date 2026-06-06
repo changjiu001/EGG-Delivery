@@ -1,17 +1,18 @@
 cmake_minimum_required(VERSION 3.10)
-project(LAN_Chat_FileManager)
+project(EGG_Delivery)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 文件管理库
+# Module 3 — 文件与存储管理
 add_library(file_manager STATIC
     file_manager.cpp
     file_manager.h
 )
-
 target_include_directories(file_manager PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(file_manager PRIVATE stdc++fs)
+
+# 如果编译器未内置 std::filesystem（GCC < 9），取消下面这行的注释：
+# target_link_libraries(file_manager PRIVATE stdc++fs)
 
 # 示例程序
 add_executable(example example.cpp)
@@ -32,6 +33,6 @@ else()
     target_compile_options(test PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# 启用测试
+# 测试
 enable_testing()
 add_test(NAME FileManagerTests COMMAND test)
