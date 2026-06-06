@@ -10,6 +10,26 @@
 #include <chrono>
 
 // ============================================================================
+//  Module 3 — 文件与存储管理
+//
+//  用法速查（其他模块开发者看这里就够了）：
+//
+//  发送：auto chunks = FileManager("./downloads").readAndChunkFile("f.bin");
+//        for (auto& c : chunks) { socket_send(c.serialize()); }
+//
+//  接收：FileManager fm;  fm.createTransferSession(hash, name, total);
+//        FileChunk c;  if (c.deserialize(wire)) fm.addChunkToSession(...);
+//        if (fm.isTransferComplete(hash)) fm.completeTransfer(hash);
+//
+//  进度：fm.getSessionProgress(hash) → 0-100
+//
+//  协议：[4B magic LANC] [1B ver] [4B id] [4B total] [4B size] [4B CRC32]
+//        [4B hash_len] [64B SHA256] [data]
+//
+//  主要类：SHA256 / FileChunk / FileTransferSession / FileManager
+// ============================================================================
+
+// ============================================================================
 //  SHA256 — 独立实现，零外部依赖
 // ============================================================================
 
