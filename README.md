@@ -11,7 +11,7 @@
 | 1. 网络通信（Socket） | 待定 | 待开发 |
 | 2. 数据与协议 | 待定 | 待开发 |
 | 3. 文件与存储管理 | refrain321 | 已完成 |
-| 4. UI & 交互 | 待定 | 待开发 |
+| 4. UI & 交互（Qt Widgets） | 待定 | 初版已完成 |
 
 ---
 
@@ -24,10 +24,12 @@
 ├── test.cpp
 ├── API_GUIDE.md
 ├── INTEGRATION.md
+├── docs/
+│   └── GUI_INTEGRATION.md
 └── modules/                 # 其他模块放这里
     ├── network/
     ├── protocol/
-    └── ui/
+    └── ui/                  # Module 4 Qt GUI
 ```
 
 ---
@@ -40,7 +42,16 @@ g++ -std=c++17 -o test test.cpp file_manager.cpp
 
 # 或 CMake
 mkdir build && cd build && cmake .. && cmake --build .
+
+# 只构建文件模块，不构建 Qt GUI
+cmake .. -DBUILD_GUI=OFF
+
+# 构建 Qt GUI（需要安装 Qt Widgets）
+cmake .. -DBUILD_GUI=ON
+cmake --build .
 ```
+
+GUI 可执行目标名为 `egg_delivery_gui`。网络与协议模块完成前，GUI 默认启用“本机回环演示”，可测试选择文件、切块、模拟发送、模拟接收、进度展示与文件组装流程。详见 [GUI_INTEGRATION.md](./docs/GUI_INTEGRATION.md)。
 
 ---
 
