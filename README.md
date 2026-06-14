@@ -44,6 +44,15 @@ mkdir build && cd build && cmake .. && cmake --build .
 
 ---
 
+## Moudule 1 网络通信（Socket）接口
+
+### 项目文件清单
+1. simple_socket.h // 跨平台套接字函数声明、类型别名、系统适配宏;
+2. simple_socket.cpp //socket 底层接口完整实现;
+3. transfer_logic.cpp // 网络层与 FileManager 业务对接逻辑;
+4. net_test.cpp // 程序交互启动入口;
+5. NETWORK_MODULE.md // 模块说明文档。
+
 ## Module 3 接口
 
 `#include "file_manager.h"` 即可。详见 [API_GUIDE.md](./API_GUIDE.md)、[INTEGRATION.md](./INTEGRATION.md)。
