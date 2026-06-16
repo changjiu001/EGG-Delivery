@@ -20,19 +20,23 @@ void MainWindow::buildTransferTab(QWidget *tab)
     m_dirButton = new QPushButton(QStringLiteral("设置接收目录"), tab);
     m_openDirButton = new QPushButton(QStringLiteral("打开接收目录"), tab);
     m_clearButton = new QPushButton(QStringLiteral("清理已结束记录"), tab);
+    m_deleteButton = new QPushButton(QStringLiteral("删除选中记录"), tab);
     top->addWidget(m_dirButton);
     top->addWidget(m_openDirButton);
     top->addStretch(1);
+    top->addWidget(m_deleteButton);
     top->addWidget(m_clearButton);
     layout->addLayout(top);
 
     m_transferTable = new QTableWidget(tab);
-    m_transferTable->setColumnCount(7);
+    m_transferTable->setColumnCount(9);
     m_transferTable->setHorizontalHeaderLabels(QStringList{
         QStringLiteral("文件"),
         QStringLiteral("对象"),
         QStringLiteral("方向"),
         QStringLiteral("大小"),
+        QStringLiteral("时间"),
+        QStringLiteral("位置"),
         QStringLiteral("进度"),
         QStringLiteral("状态"),
         QStringLiteral("操作")
@@ -43,11 +47,17 @@ void MainWindow::buildTransferTab(QWidget *tab)
     m_transferTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     m_transferTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     m_transferTable->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
-    m_transferTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
+    m_transferTable->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);
     m_transferTable->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
+    m_transferTable->horizontalHeader()->setSectionResizeMode(7, QHeaderView::ResizeToContents);
+    m_transferTable->horizontalHeader()->setSectionResizeMode(8, QHeaderView::ResizeToContents);
     m_transferTable->verticalHeader()->setVisible(false);
     m_transferTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_transferTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_transferTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_transferTable->setTextElideMode(Qt::ElideRight);
+    m_transferTable->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_transferTable->viewport()->installEventFilter(this);
     layout->addWidget(m_transferTable, 1);
 }
 
@@ -65,6 +75,8 @@ void MainWindow::connectSignals()
     connect(m_dirButton, &QPushButton::clicked, this, &MainWindow::chooseDownloadDirectory);
     connect(m_openDirButton, &QPushButton::clicked, this, &MainWindow::openDownloadDirectory);
     connect(m_clearButton, &QPushButton::clicked, this, &MainWindow::clearFinishedTransfers);
+    connect(m_deleteButton, &QPushButton::clicked, this, &MainWindow::deleteSelectedTransfer);
+    connect(m_transferTable, &QTableWidget::customContextMenuRequested, this, &MainWindow::showTransferContextMenu);
     connect(m_manualAddButton, &QPushButton::clicked, this, &MainWindow::addManualPeer);
 
     connect(&m_network, &LanNetworkClient::started, this, &MainWindow::onStarted);

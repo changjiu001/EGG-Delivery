@@ -48,6 +48,7 @@ struct TransferView {
     TransferDirection direction = TransferDirection::Upload;
     TransferState state = TransferState::Waiting;
     QString message;
+    qint64 updatedAtMs = 0;
 };
 
 Q_DECLARE_METATYPE(PeerInfo)

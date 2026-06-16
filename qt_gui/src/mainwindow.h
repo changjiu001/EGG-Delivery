@@ -5,10 +5,12 @@
 #include "lan_network_client.h"
 
 #include <QColor>
+#include <QPoint>
 #include <QHash>
 #include <QListWidget>
 #include <QMainWindow>
 #include <QProgressBar>
+#include <QStringList>
 #include <QTableWidget>
 #include <QTextBrowser>
 #include <QLabel>
@@ -25,6 +27,9 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override = default;
 
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private slots:
     void toggleNetwork();
     void sendCurrentText();
@@ -32,6 +37,8 @@ private slots:
     void chooseDownloadDirectory();
     void openDownloadDirectory();
     void clearFinishedTransfers();
+    void deleteSelectedTransfer();
+    void showTransferContextMenu(const QPoint &position);
     void addManualPeer();
 
     void onStarted(quint16 port);
@@ -63,7 +70,14 @@ private:
     void upsertTransferRow(const TransferView &transfer);
     int rowForTransfer(const QString &transferId) const;
     QWidget *makeProgressCell(int progress) const;
-    QPushButton *makeCancelButton(const QString &transferId, TransferState state);
+    QWidget *makeActionCell(const TransferView &transfer);
+    void acceptPendingTransfer(const QString &transferId);
+    void rejectPendingTransfer(const QString &transferId);
+    QStringList selectedTransferIds() const;
+    void deleteTransferIds(const QStringList &transferIds);
+    void loadTransferHistory();
+    void saveTransferHistory() const;
+    QString transferHistoryFilePath() const;
 
     LanNetworkClient m_network;
 
@@ -89,6 +103,7 @@ private:
     QPushButton *m_dirButton = nullptr;
     QPushButton *m_openDirButton = nullptr;
     QPushButton *m_clearButton = nullptr;
+    QPushButton *m_deleteButton = nullptr;
 
     QHash<QString, PeerInfo> m_peers;
     QHash<QString, TransferView> m_transfers;

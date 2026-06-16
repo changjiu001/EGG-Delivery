@@ -108,10 +108,16 @@ void MainWindow::upsertTransferRow(const TransferView &transfer)
     setItem(1, transfer.peerName);
     setItem(2, transfer.direction == TransferDirection::Upload ? QStringLiteral("发送") : QStringLiteral("接收"));
     setItem(3, formatBytes(transfer.fileSize));
-    setItem(5, transfer.message.isEmpty() ? stateText(transfer.state) : stateText(transfer.state) + QStringLiteral("：") + transfer.message);
+    setItem(4, formatTransferTime(transfer.updatedAtMs));
+    setItem(5, transfer.localPath.isEmpty() ? QStringLiteral("-") : QDir::toNativeSeparators(transfer.localPath));
+    setItem(7, transfer.message.isEmpty() ? stateText(transfer.state) : stateText(transfer.state) + QStringLiteral("：") + transfer.message);
 
-    m_transferTable->setCellWidget(row, 4, makeProgressCell(transfer.progress));
-    m_transferTable->setCellWidget(row, 6, makeCancelButton(transfer.transferId, transfer.state));
+    if (auto *pathItem = m_transferTable->item(row, 5)) {
+        pathItem->setToolTip(pathItem->text());
+    }
+
+    m_transferTable->setCellWidget(row, 6, makeProgressCell(transfer.progress));
+    m_transferTable->setCellWidget(row, 8, makeActionCell(transfer));
 }
 
 int MainWindow::rowForTransfer(const QString &transferId) const
@@ -134,15 +140,76 @@ QWidget *MainWindow::makeProgressCell(int progress) const
     return bar;
 }
 
-QPushButton *MainWindow::makeCancelButton(const QString &transferId, TransferState state)
+QWidget *MainWindow::makeActionCell(const TransferView &transfer)
 {
-    auto *button = new QPushButton(QStringLiteral("取消"));
-    const bool enabled = state == TransferState::Waiting || state == TransferState::Transferring;
-    button->setEnabled(enabled);
+    auto *container = new QWidget;
+    auto *layout = new QHBoxLayout(container);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(6);
 
-    connect(button, &QPushButton::clicked, this, [this, transferId]() {
+    const bool incomingPending = transfer.direction == TransferDirection::Download
+        && transfer.state == TransferState::Waiting;
+    if (incomingPending) {
+        auto *acceptButton = new QPushButton(QStringLiteral("接收"), container);
+        auto *rejectButton = new QPushButton(QStringLiteral("拒绝"), container);
+        acceptButton->setMinimumWidth(58);
+        rejectButton->setMinimumWidth(58);
+
+        connect(acceptButton, &QPushButton::clicked, this, [this, transferId = transfer.transferId]() {
+            acceptPendingTransfer(transferId);
+        });
+        connect(rejectButton, &QPushButton::clicked, this, [this, transferId = transfer.transferId]() {
+            rejectPendingTransfer(transferId);
+        });
+
+        layout->addWidget(acceptButton);
+        layout->addWidget(rejectButton);
+        return container;
+    }
+
+    auto *cancelButton = new QPushButton(QStringLiteral("取消"), container);
+    cancelButton->setMinimumWidth(58);
+    const bool canCancel = transfer.state == TransferState::Waiting
+        || transfer.state == TransferState::Transferring;
+    cancelButton->setEnabled(canCancel);
+
+    connect(cancelButton, &QPushButton::clicked, this, [this, transferId = transfer.transferId]() {
         m_network.cancelTransfer(transferId);
     });
 
-    return button;
+    layout->addWidget(cancelButton);
+    return container;
+}
+
+void MainWindow::acceptPendingTransfer(const QString &transferId)
+{
+    if (!m_transfers.contains(transferId)) {
+        return;
+    }
+
+    TransferView view = m_transfers.value(transferId);
+    view.message = QStringLiteral("已接收，等待文件分块");
+    view.state = TransferState::Transferring;
+    view.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+    m_transfers.insert(transferId, view);
+    upsertTransferRow(view);
+    saveTransferHistory();
+    m_network.acceptFile(transferId);
+}
+
+void MainWindow::rejectPendingTransfer(const QString &transferId)
+{
+    if (!m_transfers.contains(transferId)) {
+        return;
+    }
+
+    m_network.rejectFile(transferId);
+
+    TransferView view = m_transfers.value(transferId);
+    view.state = TransferState::Rejected;
+    view.message = QStringLiteral("你已拒绝接收");
+    view.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+    m_transfers.insert(transferId, view);
+    upsertTransferRow(view);
+    saveTransferHistory();
 }

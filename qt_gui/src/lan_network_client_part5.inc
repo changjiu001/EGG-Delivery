@@ -42,6 +42,23 @@ void LanNetworkClient::handleFileCancel(const WireMessage &message)
         return;
     }
 
+    if (m_pendingIncomingOffers.contains(transferId)) {
+        const FileOfferInfo offer = m_pendingIncomingOffers.take(transferId).offer;
+        TransferView view;
+        view.transferId = transferId;
+        view.peerId = offer.fromPeerId;
+        view.peerName = offer.fromPeerName;
+        view.fileName = offer.fileName;
+        view.localPath = QDir(downloadDirectory()).absoluteFilePath(offer.fileName);
+        view.fileSize = offer.fileSize;
+        view.direction = TransferDirection::Download;
+        view.state = TransferState::Cancelled;
+        view.progress = 0;
+        view.message = QStringLiteral("对方取消传输");
+        emitTransfer(view);
+        return;
+    }
+
     if (m_transferViews.contains(transferId)) {
         TransferView view = m_transferViews.value(transferId);
         view.state = TransferState::Cancelled;

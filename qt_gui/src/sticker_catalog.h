@@ -12,9 +12,10 @@ struct StickerMeta {
 inline QList<StickerMeta> allStickers()
 {
     return {
-        {QStringLiteral("sticker_01"), QStringLiteral(":/assets/stickers/sticker_01.xpm")},
-        {QStringLiteral("sticker_02"), QStringLiteral(":/assets/stickers/sticker_02.xpm")},
-        {QStringLiteral("sticker_03"), QStringLiteral(":/assets/stickers/sticker_03.xpm")},
+        {QStringLiteral("sticker_01"), QStringLiteral(":/assets/stickers/sticker_01.png")},
+        {QStringLiteral("sticker_02"), QStringLiteral(":/assets/stickers/sticker_02.png")},
+        {QStringLiteral("sticker_03"), QStringLiteral(":/assets/stickers/sticker_03.png")},
+        {QStringLiteral("sticker_04"), QStringLiteral(":/assets/stickers/sticker_04.png")},
     };
 }
 

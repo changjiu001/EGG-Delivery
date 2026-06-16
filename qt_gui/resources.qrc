@@ -1,8 +1,9 @@
 <RCC>
     <qresource prefix="/assets">
-        <file alias="stickers/sticker_01.xpm">assets/stickers/sticker_01.xpm</file>
-        <file alias="stickers/sticker_02.xpm">assets/stickers/sticker_02.xpm</file>
-        <file alias="stickers/sticker_03.xpm">assets/stickers/sticker_03.xpm</file>
+        <file alias="stickers/sticker_01.png">assets/stickers/sticker_01.png</file>
+        <file alias="stickers/sticker_02.png">assets/stickers/sticker_02.png</file>
+        <file alias="stickers/sticker_03.png">assets/stickers/sticker_03.png</file>
+        <file alias="stickers/sticker_04.png">assets/stickers/sticker_04.png</file>
         <file alias="icons/app_icon.xpm">assets/icons/app_icon.xpm</file>
         <file alias="style.qss">assets/style.qss</file>
     </qresource>

@@ -1,26 +1,173 @@
-    const auto reply = QMessageBox::question(this,
-                                             QStringLiteral("文件接收请求"),
-                                             message,
-                                             QMessageBox::Yes | QMessageBox::No,
-                                             QMessageBox::Yes);
+namespace {
 
-    if (reply == QMessageBox::Yes) {
-        m_network.acceptFile(offer.transferId);
-    } else {
-        m_network.rejectFile(offer.transferId);
+int directionToInt(TransferDirection direction)
+{
+    return direction == TransferDirection::Upload ? 0 : 1;
+}
+
+TransferDirection directionFromInt(int value)
+{
+    return value == 1 ? TransferDirection::Download : TransferDirection::Upload;
+}
+
+int stateToInt(TransferState state)
+{
+    return static_cast<int>(state);
+}
+
+TransferState stateFromInt(int value)
+{
+    switch (value) {
+    case 0: return TransferState::Waiting;
+    case 1: return TransferState::Transferring;
+    case 2: return TransferState::Finished;
+    case 3: return TransferState::Rejected;
+    case 4: return TransferState::Failed;
+    case 5: return TransferState::Cancelled;
+    default: return TransferState::Failed;
     }
 }
 
+bool isActiveState(TransferState state)
+{
+    return state == TransferState::Waiting || state == TransferState::Transferring;
+}
+
+QString formatTransferTime(qint64 timestampMs)
+{
+    if (timestampMs <= 0) {
+        return QStringLiteral("-");
+    }
+    return QDateTime::fromMSecsSinceEpoch(timestampMs).toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
+}
+
+QJsonObject transferToJson(const TransferView &view)
+{
+    QJsonObject object;
+    object["transferId"] = view.transferId;
+    object["peerId"] = view.peerId;
+    object["peerName"] = view.peerName;
+    object["fileName"] = view.fileName;
+    object["localPath"] = view.localPath;
+    object["fileSize"] = QString::number(view.fileSize);
+    object["progress"] = view.progress;
+    object["direction"] = directionToInt(view.direction);
+    object["state"] = stateToInt(view.state);
+    object["message"] = view.message;
+    object["updatedAtMs"] = QString::number(view.updatedAtMs);
+    return object;
+}
+
+TransferView transferFromJson(const QJsonObject &object)
+{
+    TransferView view;
+    view.transferId = object.value("transferId").toString();
+    view.peerId = object.value("peerId").toString();
+    view.peerName = object.value("peerName").toString();
+    view.fileName = object.value("fileName").toString();
+    view.localPath = object.value("localPath").toString();
+    view.fileSize = object.value("fileSize").toString().toLongLong();
+    view.progress = object.value("progress").toInt();
+    view.direction = directionFromInt(object.value("direction").toInt());
+    view.state = stateFromInt(object.value("state").toInt());
+    view.message = object.value("message").toString();
+    view.updatedAtMs = object.value("updatedAtMs").toString().toLongLong();
+    return view;
+}
+
+} // namespace
+
 void MainWindow::onTransferCreated(const TransferView &transfer)
 {
-    m_transfers.insert(transfer.transferId, transfer);
-    upsertTransferRow(transfer);
+    TransferView view = transfer;
+    if (view.updatedAtMs <= 0) {
+        view.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+    }
+
+    m_transfers.insert(view.transferId, view);
+    upsertTransferRow(view);
+    saveTransferHistory();
+
+    if (view.direction == TransferDirection::Upload) {
+        appendChatLine(QStringLiteral("我"),
+                       QStringLiteral("发送了文件邀请：%1（%2）。等待对方接收。")
+                           .arg(view.fileName, formatBytes(view.fileSize)),
+                       QColor(96, 165, 250));
+    }
 }
 
 void MainWindow::onTransferUpdated(const TransferView &transfer)
 {
-    m_transfers.insert(transfer.transferId, transfer);
-    upsertTransferRow(transfer);
+    TransferView view = transfer;
+    if (view.updatedAtMs <= 0) {
+        view.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+    }
+
+    m_transfers.insert(view.transferId, view);
+    upsertTransferRow(view);
+    saveTransferHistory();
+}
+
+QString MainWindow::transferHistoryFilePath() const
+{
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(dir);
+    return QDir(dir).filePath(QStringLiteral("transfer_history.json"));
+}
+
+void MainWindow::loadTransferHistory()
+{
+    QFile file(transferHistoryFilePath());
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return;
+    }
+
+    const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
+    const QJsonArray records = document.array();
+    bool normalized = false;
+    for (const QJsonValue &value : records) {
+        if (!value.isObject()) {
+            continue;
+        }
+
+        TransferView view = transferFromJson(value.toObject());
+        if (view.transferId.isEmpty() || view.fileName.isEmpty()) {
+            continue;
+        }
+
+        if (view.updatedAtMs <= 0) {
+            view.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
+            normalized = true;
+        }
+
+        if (isActiveState(view.state)) {
+            view.state = TransferState::Cancelled;
+            view.message = QStringLiteral("上次关闭时未完成");
+            normalized = true;
+        }
+
+        m_transfers.insert(view.transferId, view);
+        upsertTransferRow(view);
+    }
+
+    if (normalized) {
+        saveTransferHistory();
+    }
+}
+
+void MainWindow::saveTransferHistory() const
+{
+    QJsonArray records;
+    for (const TransferView &view : m_transfers) {
+        records.append(transferToJson(view));
+    }
+
+    QFile file(transferHistoryFilePath());
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        return;
+    }
+
+    file.write(QJsonDocument(records).toJson(QJsonDocument::Indented));
 }
 
 void MainWindow::onNetworkError(const QString &message)
@@ -159,7 +306,10 @@ void MainWindow::buildChatTab(QWidget *tab)
         button->setObjectName("stickerButton");
         button->setToolTip(QString());
         button->setIcon(QIcon(sticker.resourcePath));
-        button->setIconSize(QSize(88, 88));
+        const QPixmap stickerPixmap(sticker.resourcePath);
+        button->setIconSize(stickerPixmap.isNull()
+            ? QSize(88, 88)
+            : stickerPixmap.size().boundedTo(QSize(88, 88)));
         button->setToolButtonStyle(Qt::ToolButtonIconOnly);
         button->setFixedSize(104, 104);
         connect(button, &QToolButton::clicked, this, [this, sticker]() {

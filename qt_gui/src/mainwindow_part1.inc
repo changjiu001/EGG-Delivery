@@ -3,24 +3,47 @@
 #include "sticker_catalog.h"
 
 #include <QAbstractItemView>
+#include <QAction>
 #include <QApplication>
 #include <QBoxLayout>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDir>
+#include <QEvent>
+#include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHeaderView>
 #include <QGridLayout>
 #include <QIcon>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
+#include <QMenu>
 #include <QMessageBox>
+#include <QMouseEvent>
 #include <QPalette>
+#include <QPixmap>
+#include <QSet>
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QStringList>
 #include <QToolButton>
 #include <QUrl>
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == m_transferTable->viewport() && event->type() == QEvent::MouseButtonPress) {
+        const auto *mouseEvent = static_cast<QMouseEvent *>(event);
+        if (!m_transferTable->itemAt(mouseEvent->pos())) {
+            m_transferTable->clearSelection();
+            m_transferTable->setCurrentItem(nullptr);
+        }
+    }
+
+    return QMainWindow::eventFilter(watched, event);
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -34,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
     QDir().mkpath(downloadDir);
     m_network.setDownloadDirectory(downloadDir);
     m_downloadDirLabel->setText(downloadDir);
+    loadTransferHistory();
 }
 
 void MainWindow::toggleNetwork()
@@ -130,8 +154,91 @@ void MainWindow::clearFinishedTransfers()
             || view.state == TransferState::Cancelled
             || view.state == TransferState::Rejected) {
             m_transferTable->removeRow(row);
+            m_transfers.remove(transferId);
         }
     }
+    saveTransferHistory();
+}
+
+void MainWindow::deleteSelectedTransfer()
+{
+    deleteTransferIds(selectedTransferIds());
+}
+
+void MainWindow::showTransferContextMenu(const QPoint &position)
+{
+    QTableWidgetItem *item = m_transferTable->itemAt(position);
+    if (!item) {
+        m_transferTable->clearSelection();
+        m_transferTable->setCurrentItem(nullptr);
+        return;
+    }
+
+    const int row = item->row();
+    m_transferTable->clearSelection();
+    m_transferTable->selectRow(row);
+
+    QMenu menu(this);
+    QAction *deleteAction = menu.addAction(QStringLiteral("删除这条记录"));
+    if (menu.exec(m_transferTable->viewport()->mapToGlobal(position)) == deleteAction) {
+        const QString transferId = m_transferTable->item(row, 0)->data(Qt::UserRole).toString();
+        deleteTransferIds(QStringList{transferId});
+    }
+}
+
+QStringList MainWindow::selectedTransferIds() const
+{
+    QSet<QString> seen;
+    QStringList transferIds;
+    const QList<QTableWidgetItem *> items = m_transferTable->selectedItems();
+    for (const QTableWidgetItem *item : items) {
+        if (!item) {
+            continue;
+        }
+
+        const QTableWidgetItem *idItem = m_transferTable->item(item->row(), 0);
+        if (!idItem) {
+            continue;
+        }
+
+        const QString transferId = idItem->data(Qt::UserRole).toString();
+        if (!transferId.isEmpty() && !seen.contains(transferId)) {
+            seen.insert(transferId);
+            transferIds.append(transferId);
+        }
+    }
+
+    return transferIds;
+}
+
+void MainWindow::deleteTransferIds(const QStringList &transferIds)
+{
+    if (transferIds.isEmpty()) {
+        return;
+    }
+
+    for (const QString &transferId : transferIds) {
+        if (!m_transfers.contains(transferId)) {
+            continue;
+        }
+
+        const TransferView view = m_transfers.value(transferId);
+        if (view.direction == TransferDirection::Download && view.state == TransferState::Waiting) {
+            m_network.rejectFile(transferId);
+        } else if (view.state == TransferState::Waiting || view.state == TransferState::Transferring) {
+            m_network.cancelTransfer(transferId);
+        }
+
+        const int row = rowForTransfer(transferId);
+        m_transfers.remove(transferId);
+        if (row >= 0) {
+            m_transferTable->removeRow(row);
+        }
+    }
+
+    m_transferTable->clearSelection();
+    m_transferTable->setCurrentItem(nullptr);
+    saveTransferHistory();
 }
 
 void MainWindow::addManualPeer()
@@ -209,8 +316,25 @@ void MainWindow::onTextSendFailed(const QString &peerId, const QString &reason)
 
 void MainWindow::onFileOfferReceived(const FileOfferInfo &offer)
 {
-    const QString message = QStringLiteral("%1 想发送文件：\n\n%2\n大小：%3\n\n是否接收？")
-        .arg(offer.fromPeerName)
-        .arg(offer.fileName)
-        .arg(formatBytes(offer.fileSize));
+    TransferView view;
+    view.transferId = offer.transferId;
+    view.peerId = offer.fromPeerId;
+    view.peerName = offer.fromPeerName;
+    view.fileName = offer.fileName;
+    view.fileSize = offer.fileSize;
+    view.direction = TransferDirection::Download;
+    view.state = TransferState::Waiting;
+    view.progress = 0;
+    view.message = QStringLiteral("等待你确认");
+    view.localPath = QDir(m_downloadDirLabel->text()).absoluteFilePath(offer.fileName);
+    view.updatedAtMs = QDateTime::currentMSecsSinceEpoch();
 
+    m_transfers.insert(view.transferId, view);
+    upsertTransferRow(view);
+    saveTransferHistory();
+    appendChatLine(offer.fromPeerName,
+                   QStringLiteral("发送了文件邀请：%1（%2）。请在“文件传输”页签选择接收或拒绝。")
+                       .arg(offer.fileName, formatBytes(offer.fileSize)),
+                   QColor(52, 211, 153));
+    statusBar()->showMessage(QStringLiteral("收到文件邀请：%1").arg(offer.fileName), 6000);
+}
