@@ -1,103 +1,87 @@
 # EGG-Delivery
 
-无中心服务器的局域网聊天 + 文件传输 | C++17 · Socket
+无中心服务器的局域网聊天与文件传输系统，使用 C++17、Socket 和 Qt Widgets 实现。
 
----
-
-## 模块
+## 模块状态
 
 | 模块 | 负责人 | 状态 |
 |---|---|---|
-| 1. 网络通信（Socket） | b1t42520 | 已完成 |
-| 2. 数据与协议 | 3307687819 | 已完成 |
-| 3. 文件与存储管理 | refrain321 | 已完成 |
-| 4. UI & 交互 | 待定 | 待开发 |
+| 网络通信（Socket） | b1t42520 | 已完成 |
+| 数据与协议 | 3307687819 | 已完成 |
+| 文件与存储管理 | refrain321 | 已完成 |
+| UI 与交互（Qt Widgets） | changjiu001 | 已完成 |
 
----
+## 仓库结构
 
-## 结构
-
+```text
+├─ network_module/          # 原生 Socket 网络模块与命令行测试
+├─ protocol/                # 原协议模块
+├─ file_manager.cpp/.h      # 文件分块、校验、会话和组装
+├─ example.cpp              # FileManager 示例
+├─ test.cpp                 # FileManager 测试
+├─ qt_gui/                  # 完整 Qt Widgets 客户端
+│  ├─ CMakeLists.txt
+│  ├─ resources.qrc
+│  ├─ assets/
+│  └─ src/
+├─ API_GUIDE.md
+├─ INTEGRATION.md
+└─ CMakeLists.txt
 ```
-├── CMakeLists.txt
-├── file_manager.h / .cpp    # Module 3
-├── example.cpp
-├── test.cpp
-├── API_GUIDE.md
-├── INTEGRATION.md
-└── modules/                 # 其他模块放这里
-    ├── network/
-    ├── protocol/
-    └── ui/
+
+## Qt 图形界面
+
+图形界面提供：
+
+- UDP 局域网用户发现和手动 IP 连接。
+- TCP 点对点文字聊天。
+- TCP 文件传输、接收确认、进度显示和取消。
+- 聊天气泡和表情包网格面板。
+- 同一台电脑双开测试。
+- 使用根目录 `FileManager` 进行 64 KB 分块、CRC32 校验、SHA256 标识和文件组装。
+
+Qt Creator 直接打开：
+
+```text
+qt_gui/CMakeLists.txt
 ```
 
----
+选择 Qt 5/Qt 6 的 Widgets + Network Kit 后构建运行。详细步骤见
+[`qt_gui/README.md`](qt_gui/README.md)。
 
-## 构建
+## 根目录 CMake 构建
+
+默认构建原有 FileManager 示例和测试，不强制要求安装 Qt：
 
 ```bash
-g++ -std=c++17 -o example example.cpp file_manager.cpp
-g++ -std=c++17 -o test test.cpp file_manager.cpp
-
-# 或 CMake
-mkdir build && cd build && cmake .. && cmake --build .
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build
 ```
 
----
+需要从根目录同时构建 Qt GUI 时：
 
-## Moudule 1 网络通信（Socket）接口
+```bash
+cmake -S . -B build -DBUILD_QT_GUI=ON
+cmake --build build
+```
 
-### 项目文件清单
-1. simple_socket.h // 跨平台套接字函数声明、类型别名、系统适配宏;
-2. simple_socket.cpp //socket 底层接口完整实现;
-3. transfer_logic.cpp // 网络层与 FileManager 业务对接逻辑;
-4. net_test.cpp // 程序交互启动入口;
-5. NETWORK_MODULE.md // 模块说明文档。
-
-## Module 3 接口
-
-`#include "file_manager.h"` 即可。详见 [API_GUIDE.md](./API_GUIDE.md)、[INTEGRATION.md](./INTEGRATION.md)。
-
-### 发送
+## FileManager 基本接口
 
 ```cpp
 FileManager fm("./downloads");
-auto chunks = fm.readAndChunkFile("file.bin");  // 默认 64KB/块
-for (auto& c : chunks) {
-    auto wire = c.serialize();   // → vector<uint8_t>，交给 Socket 发
+auto chunks = fm.readAndChunkFile("file.bin");
+for (const auto &chunk : chunks) {
+    const auto wire = chunk.serialize();
+    // 将 wire 交给网络层发送
 }
 ```
 
-### 接收
+接收端对每个分块反序列化并添加到会话，全部到齐后调用
+`completeTransfer()` 完成文件组装。详见 [`API_GUIDE.md`](API_GUIDE.md) 和
+[`INTEGRATION.md`](INTEGRATION.md)。
 
-```cpp
-FileManager fm("./downloads");
-fm.createTransferSession(file_hash, "save_as.bin", total_chunks);
+## 网络环境说明
 
-// Socket 每收到一包：
-FileChunk chunk;
-if (chunk.deserialize(wire_bytes)) {          // 自动 CRC 校验
-    fm.addChunkToSession(chunk.file_hash, chunk.chunk_id, chunk.data);
-}
-
-if (fm.isTransferComplete(file_hash)) {
-    fm.completeTransfer(file_hash);           // 写入磁盘
-}
-```
-
-### 进度 & 管理
-
-```cpp
-int  pct  = fm.getSessionProgress(hash);       // 0-100, -1=不存在
-auto list = fm.getActiveSessions();            // 所有活跃传输
-fm.cancelTransfer(hash);                       // 取消
-fm.cleanupIdleSessions(3600);                  // 清理空闲 >1h 的会话
-```
-
----
-
-## 协议（v1）
-
-```
-[4B magic 0x4C414E43] [1B version=1] [4B chunk_id] [4B total_chunks]
-[4B data_size] [4B CRC32] [4B hash_len] [64B SHA256 hex] [data]
-```
+校园 Wi-Fi 可能启用客户端隔离，导致处在同一 SSID 的两台电脑仍不能互相访问。
+课程演示优先使用同一个手机热点、普通路由器或允许终端互访的局域网。

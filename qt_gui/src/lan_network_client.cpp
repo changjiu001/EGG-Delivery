@@ -1,0 +1,5 @@
+#include "lan_network_client_part1.inc"
+#include "lan_network_client_part2.inc"
+#include "lan_network_client_part3.inc"
+#include "lan_network_client_part4.inc"
+#include "lan_network_client_part5.inc"
