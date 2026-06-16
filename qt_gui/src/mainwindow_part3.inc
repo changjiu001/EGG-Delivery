@@ -1,3 +1,4 @@
+#include <QFile>
     m_messageEdit->setPlaceholderText(QStringLiteral("输入消息，Enter 发送"));
     m_stickerToggleButton = new QPushButton(QStringLiteral("表情包"), tab);
     m_sendButton = new QPushButton(QStringLiteral("发送"), tab);
@@ -98,41 +99,9 @@ void MainWindow::applyStyle()
     palette.setColor(QPalette::ToolTipText, QColor(248, 250, 252));
     qApp->setPalette(palette);
 
-    qApp->setStyleSheet(R"(
-        * {
-            color: #f8fafc;
-            font-size: 14px;
-        }
+    QFile styleFile(QStringLiteral(":/assets/style.qss"));
+    if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qApp->setStyleSheet(QString::fromUtf8(styleFile.readAll()));
+    }
+}
 
-        QMainWindow, QDialog, QWidget {
-            background: #0f172a;
-        }
-
-        QLabel {
-            color: #f8fafc;
-            background: transparent;
-        }
-
-
-        #leftPanel {
-            background: #020617;
-            border: 1px solid #334155;
-            border-radius: 10px;
-        }
-
-        #leftPanel #titleLabel {
-            color: #ffffff;
-            font-size: 22px;
-            font-weight: 700;
-        }
-
-        #leftPanel #sectionLabel {
-            color: #bfdbfe;
-            font-weight: 700;
-            margin-top: 8px;
-        }
-
-        QTabWidget::pane {
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
