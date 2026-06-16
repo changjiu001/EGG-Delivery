@@ -1,0 +1,170 @@
+* {
+    color: #f8fafc;
+    font-size: 14px;
+}
+
+QMainWindow, QDialog, QWidget {
+    background: #0f172a;
+}
+
+QLabel {
+    background: transparent;
+}
+
+#leftPanel {
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 12px;
+}
+
+#titleLabel {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+#sectionLabel, #stickerPanelTitle {
+    color: #bfdbfe;
+    font-weight: 700;
+}
+
+QTabWidget::pane {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+}
+
+QTabBar::tab {
+    color: #cbd5e1;
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 8px 18px;
+    margin-right: 4px;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+}
+
+QTabBar::tab:selected {
+    color: #ffffff;
+    background: #7c3aed;
+    font-weight: 700;
+}
+
+QTextBrowser, QTableWidget, QListWidget, QTreeView, QListView,
+QLineEdit, QSpinBox, QFileDialog, QMessageBox {
+    color: #f8fafc;
+    background: #111827;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    selection-background-color: #7c3aed;
+    selection-color: #ffffff;
+}
+
+QTextBrowser {
+    background: #020617;
+    padding: 8px;
+}
+
+QLineEdit, QSpinBox {
+    padding: 7px;
+}
+
+QLineEdit:focus, QSpinBox:focus, QListWidget:focus, QTableWidget:focus {
+    border-color: #c4b5fd;
+}
+
+QListWidget {
+    outline: none;
+    padding: 4px;
+}
+
+QListWidget::item {
+    padding: 9px;
+    border-radius: 8px;
+}
+
+QListWidget::item:hover {
+    background: #4c1d95;
+}
+
+QListWidget::item:selected {
+    background: #7c3aed;
+    color: #ffffff;
+}
+
+QHeaderView::section {
+    color: #ffffff;
+    background: #1e293b;
+    border: 0;
+    border-right: 1px solid #334155;
+    border-bottom: 1px solid #334155;
+    padding: 7px;
+    font-weight: 700;
+}
+
+QPushButton {
+    color: #ffffff;
+    background: #7c3aed;
+    border: 1px solid #c4b5fd;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background: #6d28d9;
+}
+
+QPushButton:pressed {
+    background: #5b21b6;
+}
+
+QPushButton:disabled {
+    color: #64748b;
+    background: #1e293b;
+    border-color: #334155;
+}
+
+#stickerPanel {
+    background: #020617;
+    border: 1px solid #475569;
+    border-radius: 12px;
+}
+
+QToolButton#stickerButton {
+    background: #111827;
+    border: 1px solid #475569;
+    border-radius: 12px;
+    padding: 5px;
+}
+
+QToolButton#stickerButton:hover {
+    background: #312e81;
+    border-color: #c4b5fd;
+}
+
+QProgressBar {
+    color: #ffffff;
+    background: #020617;
+    border: 1px solid #475569;
+    border-radius: 7px;
+    text-align: center;
+    font-weight: 700;
+}
+
+QProgressBar::chunk {
+    background: #22c55e;
+    border-radius: 6px;
+}
+
+QStatusBar {
+    color: #cbd5e1;
+    background: #020617;
+    border-top: 1px solid #334155;
+}
+
+QToolTip {
+    color: #f8fafc;
+    background: #020617;
+    border: 1px solid #c4b5fd;
+}
