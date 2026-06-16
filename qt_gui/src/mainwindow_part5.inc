@@ -4,8 +4,8 @@
         "<table cellspacing='0' cellpadding='0' style='max-width:72%;'>"
         "<tr><td style='background-color:%2;border:1px solid %3;border-radius:14px;padding:9px 12px;'>"
         "<span style='color:%4;font-size:12px;font-weight:700;'>%5</span> "
-        "<span style='color:#cbd5e1;font-size:11px;'>%6</span><br>"
-        "<span style='color:#ffffff;font-size:14px;line-height:1.45;'>%7</span>"
+        "<span style='color:#8b949e;font-size:11px;'>%6</span><br>"
+        "<span style='color:#e6edf3;font-size:14px;line-height:1.45;'>%7</span>"
         "</td></tr></table>"
         "</td></tr></table>")
         .arg(align,
@@ -33,8 +33,8 @@ void MainWindow::appendStickerLine(const QString &name, const QString &stickerId
 
     const bool outgoing = name == QStringLiteral("我");
     const QString align = outgoing ? QStringLiteral("right") : QStringLiteral("left");
-    const QString bubbleColor = outgoing ? QStringLiteral("#312e81") : QStringLiteral("#1f2937");
-    const QString borderColor = outgoing ? QStringLiteral("#c4b5fd") : QStringLiteral("#475569");
+    const QString bubbleColor = outgoing ? QStringLiteral("#1c2d41") : QStringLiteral("#21262d");
+    const QString borderColor = outgoing ? QStringLiteral("#303f5c") : QStringLiteral("#30363d");
 
     const QString html = QStringLiteral(
         "<table width='100%' cellspacing='0' cellpadding='2' style='margin:8px 0;'>"
@@ -42,7 +42,7 @@ void MainWindow::appendStickerLine(const QString &name, const QString &stickerId
         "<table cellspacing='0' cellpadding='0'>"
         "<tr><td style='background-color:%2;border:1px solid %3;border-radius:16px;padding:9px 10px;'>"
         "<span style='color:%4;font-size:12px;font-weight:700;'>%5</span> "
-        "<span style='color:#cbd5e1;font-size:11px;'>%6</span><br>"
+        "<span style='color:#8b949e;font-size:11px;'>%6</span><br>"
         "<img src='%7' width='132'/>"
         "</td></tr></table>"
         "</td></tr></table>")
@@ -70,7 +70,7 @@ void MainWindow::sendStickerById(const QString &stickerId)
     }
 
     m_network.sendSticker(peerId, stickerId);
-    appendStickerLine(QStringLiteral("我"), stickerId, QColor(96, 165, 250));
+    appendStickerLine(QStringLiteral("我"), stickerId, QColor(121, 192, 255));
 }
 
 void MainWindow::setUiRunning(bool running, quint16 port)
@@ -78,6 +78,9 @@ void MainWindow::setUiRunning(bool running, quint16 port)
     m_nameEdit->setEnabled(!running);
     m_portSpin->setEnabled(!running);
     m_startButton->setText(running ? QStringLiteral("停止") : QStringLiteral("启动"));
+    m_startButton->setObjectName(running ? QStringLiteral("stopButton") : QStringLiteral("startButton"));
+    m_startButton->style()->unpolish(m_startButton);
+    m_startButton->style()->polish(m_startButton);
     if (m_manualIpEdit) m_manualIpEdit->setEnabled(running);
     if (m_manualPortSpin) m_manualPortSpin->setEnabled(running);
     if (m_manualAddButton) m_manualAddButton->setEnabled(running);

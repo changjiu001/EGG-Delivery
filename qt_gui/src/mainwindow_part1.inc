@@ -91,7 +91,7 @@ void MainWindow::sendCurrentText()
     }
 
     m_network.sendText(peerId, text);
-    appendChatLine(QStringLiteral("我"), text, QColor(96, 165, 250));
+    appendChatLine(QStringLiteral("我"), text, QColor(121, 192, 255));
     m_messageEdit->clear();
 }
 
@@ -299,13 +299,13 @@ void MainWindow::onPeerOffline(const QString &peerId)
 void MainWindow::onTextReceived(const QString &peerId, const QString &peerName, const QString &text, qint64 timestampMs)
 {
     Q_UNUSED(peerId)
-    appendChatLine(peerName, text, QColor(52, 211, 153), timestampMs);
+    appendChatLine(peerName, text, QColor(126, 231, 135), timestampMs);
 }
 
 void MainWindow::onStickerReceived(const QString &peerId, const QString &peerName, const QString &stickerId, qint64 timestampMs)
 {
     Q_UNUSED(peerId)
-    appendStickerLine(peerName, stickerId, QColor(250, 204, 21), timestampMs);
+    appendStickerLine(peerName, stickerId, QColor(227, 179, 65), timestampMs);
 }
 
 void MainWindow::onTextSendFailed(const QString &peerId, const QString &reason)
@@ -335,6 +335,6 @@ void MainWindow::onFileOfferReceived(const FileOfferInfo &offer)
     appendChatLine(offer.fromPeerName,
                    QStringLiteral("发送了文件邀请：%1（%2）。请在“文件传输”页签选择接收或拒绝。")
                        .arg(offer.fileName, formatBytes(offer.fileSize)),
-                   QColor(52, 211, 153));
+                   QColor(126, 231, 135));
     statusBar()->showMessage(QStringLiteral("收到文件邀请：%1").arg(offer.fileName), 6000);
 }

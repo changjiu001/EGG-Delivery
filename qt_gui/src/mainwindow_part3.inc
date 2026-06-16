@@ -2,6 +2,7 @@
     m_messageEdit->setPlaceholderText(QStringLiteral("输入消息，Enter 发送"));
     m_stickerToggleButton = new QPushButton(QStringLiteral("表情包"), tab);
     m_sendButton = new QPushButton(QStringLiteral("发送"), tab);
+    m_sendButton->setObjectName(QStringLiteral("sendButton"));
     m_fileButton = new QPushButton(QStringLiteral("发送文件"), tab);
     bottom->addWidget(m_messageEdit, 1);
     bottom->addWidget(m_stickerToggleButton);
@@ -97,18 +98,18 @@ void MainWindow::applyStyle()
     qApp->setStyle(QStringLiteral("Fusion"));
 
     QPalette palette;
-    palette.setColor(QPalette::Window, QColor(15, 23, 42));
-    palette.setColor(QPalette::WindowText, QColor(248, 250, 252));
-    palette.setColor(QPalette::Base, QColor(15, 23, 42));
-    palette.setColor(QPalette::AlternateBase, QColor(30, 41, 59));
-    palette.setColor(QPalette::Text, QColor(248, 250, 252));
-    palette.setColor(QPalette::Button, QColor(30, 41, 59));
-    palette.setColor(QPalette::ButtonText, QColor(248, 250, 252));
-    palette.setColor(QPalette::BrightText, QColor(248, 113, 113));
-    palette.setColor(QPalette::Highlight, QColor(37, 99, 235));
-    palette.setColor(QPalette::HighlightedText, QColor(255, 255, 255));
-    palette.setColor(QPalette::ToolTipBase, QColor(15, 23, 42));
-    palette.setColor(QPalette::ToolTipText, QColor(248, 250, 252));
+    palette.setColor(QPalette::Window, QColor(13, 17, 23));
+    palette.setColor(QPalette::WindowText, QColor(230, 237, 243));
+    palette.setColor(QPalette::Base, QColor(22, 27, 34));
+    palette.setColor(QPalette::AlternateBase, QColor(33, 38, 45));
+    palette.setColor(QPalette::Text, QColor(230, 237, 243));
+    palette.setColor(QPalette::Button, QColor(33, 38, 45));
+    palette.setColor(QPalette::ButtonText, QColor(230, 237, 243));
+    palette.setColor(QPalette::BrightText, QColor(248, 81, 73));
+    palette.setColor(QPalette::Highlight, QColor(38, 79, 120));
+    palette.setColor(QPalette::HighlightedText, QColor(240, 246, 252));
+    palette.setColor(QPalette::ToolTipBase, QColor(33, 38, 45));
+    palette.setColor(QPalette::ToolTipText, QColor(230, 237, 243));
     qApp->setPalette(palette);
 
     QFile styleFile(QStringLiteral(":/assets/style.qss"));

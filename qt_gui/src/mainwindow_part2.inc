@@ -92,7 +92,7 @@ void MainWindow::onTransferCreated(const TransferView &transfer)
         appendChatLine(QStringLiteral("我"),
                        QStringLiteral("发送了文件邀请：%1（%2）。等待对方接收。")
                            .arg(view.fileName, formatBytes(view.fileSize)),
-                       QColor(96, 165, 250));
+                       QColor(121, 192, 255));
     }
 }
 
@@ -229,6 +229,7 @@ void MainWindow::buildLeftPanel(QWidget *parent)
     layout->addWidget(m_portSpin);
 
     m_startButton = new QPushButton(QStringLiteral("启动"), parent);
+    m_startButton->setObjectName(QStringLiteral("startButton"));
     layout->addWidget(m_startButton);
 
     m_statusLabel = new QLabel(QStringLiteral("状态：未启动"), parent);

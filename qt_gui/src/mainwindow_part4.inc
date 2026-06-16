@@ -23,7 +23,7 @@ void MainWindow::appendChatLine(const QString &name, const QString &text, const 
 
     const bool outgoing = name == QStringLiteral("我");
     const QString align = outgoing ? QStringLiteral("right") : QStringLiteral("left");
-    const QString bubbleColor = outgoing ? QStringLiteral("#2563eb") : QStringLiteral("#1f2937");
-    const QString borderColor = outgoing ? QStringLiteral("#93c5fd") : QStringLiteral("#475569");
+    const QString bubbleColor = outgoing ? QStringLiteral("#1c2d41") : QStringLiteral("#21262d");
+    const QString borderColor = outgoing ? QStringLiteral("#303f5c") : QStringLiteral("#30363d");
     const QString nameColor = color.name();
 
