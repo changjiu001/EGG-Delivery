@@ -166,14 +166,14 @@ void LanNetworkClient::sendSticker(const QString &peerId, const QString &sticker
     header["timestampMs"] = QString::number(QDateTime::currentMSecsSinceEpoch());
 
     if (!sendToPeer(peerId, makeMessage(WireMessageType::Sticker, header))) {
-        emit errorOccurrred(QStringLiteral("发送行情包失败：百标用户不可用"));
+        emit errorOccurred(QStringLiteral("发送表情包失败：目标用户不可用"));
     }
 }
 
 void LanNetworkClient::sendFile(const QString &peerId, const QString &filePath)
 {
     if (!m_running) {
-        emit errorOccurred(QStringLiteral("请先启动局域网客户端不昇));
+        emit errorOccurred(QStringLiteral("请先启动局域网客户端"));
         return;
     }
 
@@ -211,4 +211,3 @@ void LanNetworkClient::sendFile(const QString &peerId, const QString &filePath)
     view.state = TransferState::Waiting;
     view.progress = 0;
     view.message = QStringLiteral("等待对方接收");
-
