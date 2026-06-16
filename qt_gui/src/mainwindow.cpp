@@ -1,0 +1,5 @@
+#include "mainwindow_part1.inc"
+#include "mainwindow_part2.inc"
+#include "mainwindow_part3.inc"
+#include "mainwindow_part4.inc"
+#include "mainwindow_part5.inc"
