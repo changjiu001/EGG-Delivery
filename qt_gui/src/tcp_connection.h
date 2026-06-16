@@ -38,7 +38,7 @@ private:
 
     QTcpSocket *m_socket = nullptr;
     QByteArray m_buffer;
-    QList<QByteAray> m_pendingFrames;
+    QList<QByteArray> m_pendingFrames;
     QString m_peerId;
 };
 
