@@ -4,5 +4,6 @@
         <file alias="stickers/sticker_02.xpm">assets/stickers/sticker_02.xpm</file>
         <file alias="stickers/sticker_03.xpm">assets/stickers/sticker_03.xpm</file>
         <file alias="icons/app_icon.xpm">assets/icons/app_icon.xpm</file>
+        <file alias="style.qss">assets/style.qss</file>
     </qresource>
 </RCC>
