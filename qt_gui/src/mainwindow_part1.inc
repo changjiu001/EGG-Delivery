@@ -1,3 +1,5 @@
+#include "folder_packer.h"
+
 #include "mainwindow.h"
 
 #include "sticker_catalog.h"
@@ -29,6 +31,7 @@
 #include <QStandardPaths>
 #include <QStatusBar>
 #include <QStringList>
+#include <QTextCursor>
 #include <QToolButton>
 #include <QUrl>
 
@@ -115,9 +118,60 @@ void MainWindow::chooseAndSendFile()
         return;
     }
 
-    m_network.sendFile(peerId, files.first());
+    const QString path = files.first();
+    const QFileInfo info(path);
+    m_network.sendFile(peerId, path);
+    appendChatLine(QStringLiteral("我"),
+                   QStringLiteral("发送了文件邀请：%1（%2）。等待对方接收。")
+                       .arg(info.fileName(), formatBytes(info.size())),
+                   QColor(121, 192, 255));
 }
 
+
+
+void MainWindow::chooseAndSendFolder()
+{
+    const QString peerId = selectedPeerId();
+    if (peerId.isEmpty()) {
+        QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("请先选择一个在线用户。"));
+        return;
+    }
+
+    QFileDialog dialog(this, QStringLiteral("选择要发送的文件夹"));
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    dialog.setOption(QFileDialog::ShowDirsOnly, true);
+    dialog.setFileMode(QFileDialog::Directory);
+    dialog.setOption(QFileDialog::DontResolveSymlinks, true);
+    if (!dialog.exec()) {
+        return;
+    }
+
+    const QStringList dirs = dialog.selectedFiles();
+    if (dirs.isEmpty() || dirs.first().isEmpty()) {
+        return;
+    }
+
+    const QString path = dirs.first();
+    const QFileInfo info(path);
+    const qint64 folderSize = FolderPacker::folderByteSize(path);
+
+    const auto reply = QMessageBox::question(
+        this,
+        QStringLiteral("确认发送文件夹"),
+        QStringLiteral("将把文件夹「%1」打包为 zip 后发送（约 %2，实际 zip 体积相近）。是否继续？")
+            .arg(info.fileName(), formatBytes(folderSize)),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::Yes);
+    if (reply != QMessageBox::Yes) {
+        return;
+    }
+
+    m_network.sendFolder(peerId, path);
+    appendChatLine(QStringLiteral("我"),
+                   QStringLiteral("发送了文件夹邀请：%1（将打包为 %2.zip，约 %3）。等待对方接收…")
+                       .arg(info.fileName(), info.fileName(), formatBytes(folderSize)),
+                   QColor(121, 192, 255));
+}
 void MainWindow::chooseDownloadDirectory()
 {
     QFileDialog dialog(this, QStringLiteral("选择接收文件保存目录"), m_downloadDirLabel->text());

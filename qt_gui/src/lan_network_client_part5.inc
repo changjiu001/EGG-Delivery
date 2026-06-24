@@ -1,21 +1,21 @@
-    }
+﻿    }
 
     if (!m_fileManager.addChunkToSession(chunk.file_hash, chunk.chunk_id, chunk.data)) {
-        emit errorOccurred(QStringLiteral("写入文件分块失败"));
+        emit errorOccurred(QStringLiteral("鍐欏叆鏂囦欢鍒嗗潡澶辫触"));
         return;
     }
 
     TransferView view = m_transferViews.value(transferId);
     view.progress = qMax(0, m_fileManager.getSessionProgress(chunk.file_hash));
     view.state = TransferState::Transferring;
-    view.message = QStringLiteral("正在接收：%1%").arg(view.progress);
+    view.message = QStringLiteral("姝ｅ湪鎺ユ敹锛?1%").arg(view.progress);
     emitTransfer(view);
 
     if (m_fileManager.isTransferComplete(chunk.file_hash)) {
         const bool ok = m_fileManager.completeTransfer(chunk.file_hash);
         view.progress = 100;
         view.state = ok ? TransferState::Finished : TransferState::Failed;
-        view.message = ok ? QStringLiteral("接收完成") : QStringLiteral("文件组装失败");
+        view.message = ok ? QStringLiteral("鎺ユ敹瀹屾垚") : QStringLiteral("鏂囦欢缁勮澶辫触");
         emitTransfer(view);
     }
 }
@@ -37,7 +37,7 @@ void LanNetworkClient::handleFileCancel(const WireMessage &message)
     if (m_outgoingTransfers.contains(transferId)) {
         OutgoingTransfer transfer = m_outgoingTransfers.take(transferId);
         transfer.view.state = TransferState::Cancelled;
-        transfer.view.message = QStringLiteral("对方取消传输");
+        transfer.view.message = QStringLiteral("瀵规柟鍙栨秷浼犺緭");
         emitTransfer(transfer.view);
         return;
     }
@@ -54,7 +54,7 @@ void LanNetworkClient::handleFileCancel(const WireMessage &message)
         view.direction = TransferDirection::Download;
         view.state = TransferState::Cancelled;
         view.progress = 0;
-        view.message = QStringLiteral("对方取消传输");
+        view.message = QStringLiteral("瀵规柟鍙栨秷浼犺緭");
         emitTransfer(view);
         return;
     }
@@ -62,7 +62,7 @@ void LanNetworkClient::handleFileCancel(const WireMessage &message)
     if (m_transferViews.contains(transferId)) {
         TransferView view = m_transferViews.value(transferId);
         view.state = TransferState::Cancelled;
-        view.message = QStringLiteral("对方取消传输");
+        view.message = QStringLiteral("瀵规柟鍙栨秷浼犺緭");
         emitTransfer(view);
     }
 }
@@ -116,4 +116,16 @@ void LanNetworkClient::emitTransfer(const TransferView &view)
     } else {
         emit transferUpdated(view);
     }
+}
+
+void LanNetworkClient::cleanupOutgoingTempFile(const OutgoingTransfer &transfer)
+{
+    if (transfer.tempZipPath.isEmpty()) {
+        return;
+    }
+
+    const QFileInfo zipInfo(transfer.tempZipPath);
+    const QString tempRoot = zipInfo.absolutePath();
+    QFile::remove(transfer.tempZipPath);
+    QDir(tempRoot).removeRecursively();
 }

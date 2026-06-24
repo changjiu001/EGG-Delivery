@@ -4,10 +4,12 @@
     m_sendButton = new QPushButton(QStringLiteral("发送"), tab);
     m_sendButton->setObjectName(QStringLiteral("sendButton"));
     m_fileButton = new QPushButton(QStringLiteral("发送文件"), tab);
+    m_folderButton = new QPushButton(QStringLiteral("发送文件夹"), tab);
     bottom->addWidget(m_messageEdit, 1);
     bottom->addWidget(m_stickerToggleButton);
     bottom->addWidget(m_sendButton);
     bottom->addWidget(m_fileButton);
+    bottom->addWidget(m_folderButton);
     layout->addLayout(bottom);
 }
 
@@ -53,6 +55,7 @@ void MainWindow::buildTransferTab(QWidget *tab)
     m_transferTable->horizontalHeader()->setSectionResizeMode(7, QHeaderView::ResizeToContents);
     m_transferTable->horizontalHeader()->setSectionResizeMode(8, QHeaderView::ResizeToContents);
     m_transferTable->verticalHeader()->setVisible(false);
+    m_transferTable->verticalHeader()->setDefaultSectionSize(42);
     m_transferTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_transferTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_transferTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -73,6 +76,7 @@ void MainWindow::connectSignals()
         }
     });
     connect(m_fileButton, &QPushButton::clicked, this, &MainWindow::chooseAndSendFile);
+    connect(m_folderButton, &QPushButton::clicked, this, &MainWindow::chooseAndSendFolder);
     connect(m_dirButton, &QPushButton::clicked, this, &MainWindow::chooseDownloadDirectory);
     connect(m_openDirButton, &QPushButton::clicked, this, &MainWindow::openDownloadDirectory);
     connect(m_clearButton, &QPushButton::clicked, this, &MainWindow::clearFinishedTransfers);

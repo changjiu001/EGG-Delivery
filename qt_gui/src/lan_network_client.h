@@ -1,4 +1,4 @@
-#ifndef LAN_NETWORK_CLIENT_H
+﻿#ifndef LAN_NETWORK_CLIENT_H
 #define LAN_NETWORK_CLIENT_H
 
 #include "app_types.h"
@@ -33,6 +33,7 @@ public slots:
     void sendText(const QString &peerId, const QString &text);
     void sendSticker(const QString &peerId, const QString &stickerId);
     void sendFile(const QString &peerId, const QString &filePath);
+    void sendFolder(const QString &peerId, const QString &folderPath);
     void acceptFile(const QString &transferId);
     void rejectFile(const QString &transferId);
     void cancelTransfer(const QString &transferId);
@@ -71,6 +72,7 @@ private:
         std::vector<FileChunk> chunks;
         int nextChunk = 0;
         bool accepted = false;
+        QString tempZipPath;
     };
 
     struct PendingIncomingOffer {
@@ -98,6 +100,7 @@ private:
     QString safeFileName(const QString &fileName) const;
     QString peerName(const QString &peerId) const;
     void emitTransfer(const TransferView &view);
+    void cleanupOutgoingTempFile(const OutgoingTransfer &transfer);
 
     static constexpr quint16 DiscoveryPort = 8888;
     static constexpr int HelloIntervalMs = 2000;

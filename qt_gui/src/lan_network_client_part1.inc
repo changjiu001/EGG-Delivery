@@ -1,3 +1,5 @@
+#include "folder_packer.h"
+
 #include "lan_network_client.h"
 
 #include <QCoreApplication>

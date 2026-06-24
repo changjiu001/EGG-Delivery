@@ -146,6 +146,7 @@ void LanNetworkClient::handleFileReject(const WireMessage &message)
     }
 
     OutgoingTransfer transfer = m_outgoingTransfers.take(transferId);
+    cleanupOutgoingTempFile(transfer);
     transfer.view.state = TransferState::Rejected;
     transfer.view.message = QStringLiteral("对方拒绝接收");
     emitTransfer(transfer.view);

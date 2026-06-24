@@ -87,13 +87,6 @@ void MainWindow::onTransferCreated(const TransferView &transfer)
     m_transfers.insert(view.transferId, view);
     upsertTransferRow(view);
     saveTransferHistory();
-
-    if (view.direction == TransferDirection::Upload) {
-        appendChatLine(QStringLiteral("我"),
-                       QStringLiteral("发送了文件邀请：%1（%2）。等待对方接收。")
-                           .arg(view.fileName, formatBytes(view.fileSize)),
-                       QColor(121, 192, 255));
-    }
 }
 
 void MainWindow::onTransferUpdated(const TransferView &transfer)

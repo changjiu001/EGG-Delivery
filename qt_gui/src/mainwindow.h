@@ -34,6 +34,7 @@ private slots:
     void toggleNetwork();
     void sendCurrentText();
     void chooseAndSendFile();
+    void chooseAndSendFolder();
     void chooseDownloadDirectory();
     void openDownloadDirectory();
     void clearFinishedTransfers();
@@ -95,6 +96,7 @@ private:
     QLineEdit *m_messageEdit = nullptr;
     QPushButton *m_sendButton = nullptr;
     QPushButton *m_fileButton = nullptr;
+    QPushButton *m_folderButton = nullptr;
     QPushButton *m_stickerToggleButton = nullptr;
     QWidget *m_stickerPanel = nullptr;
 

@@ -156,6 +156,14 @@ QPushButton:disabled {
     border-color: #21262d;
 }
 
+QPushButton#transferActionButton {
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    min-height: 26px;
+    max-height: 28px;
+}
+
 /* Primary action buttons */
 QPushButton#startButton,
 QPushButton#sendButton {

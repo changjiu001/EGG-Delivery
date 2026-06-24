@@ -1,6 +1,8 @@
 # CMake / Qt Creator
 build/
 build-*/
+build-qt-verify/
+release/
 cmake-build-*/
 CMakeFiles/
 CMakeCache.txt

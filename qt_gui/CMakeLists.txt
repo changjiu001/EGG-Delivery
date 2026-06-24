@@ -44,6 +44,8 @@ add_executable(LanChatQt WIN32
     src/mainwindow_part4.inc
     src/mainwindow_part5.inc
     src/sticker_catalog.h
+    src/folder_packer.h
+    src/folder_packer.cpp
     resources.qrc
 )
 

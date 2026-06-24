@@ -16,7 +16,14 @@
              time.toString("HH:mm:ss"),
              QString(text).toHtmlEscaped().replace(QStringLiteral("\n"), QStringLiteral("<br>")));
 
-    m_chatView->append(html);
+    QTextCursor cursor(m_chatView->document());
+    cursor.movePosition(QTextCursor::End);
+    if (!m_chatView->document()->isEmpty()) {
+        cursor.insertBlock();
+    }
+    cursor.insertHtml(html);
+    m_chatView->setTextCursor(cursor);
+    m_chatView->ensureCursorVisible();
 }
 
 void MainWindow::appendStickerLine(const QString &name, const QString &stickerId, const QColor &color, qint64 timestampMs)
@@ -54,7 +61,14 @@ void MainWindow::appendStickerLine(const QString &name, const QString &stickerId
              time.toString("HH:mm:ss"),
              stickerPath.toHtmlEscaped());
 
-    m_chatView->append(html);
+    QTextCursor cursor(m_chatView->document());
+    cursor.movePosition(QTextCursor::End);
+    if (!m_chatView->document()->isEmpty()) {
+        cursor.insertBlock();
+    }
+    cursor.insertHtml(html);
+    m_chatView->setTextCursor(cursor);
+    m_chatView->ensureCursorVisible();
 }
 
 void MainWindow::sendStickerById(const QString &stickerId)
@@ -119,6 +133,7 @@ void MainWindow::upsertTransferRow(const TransferView &transfer)
         pathItem->setToolTip(pathItem->text());
     }
 
+    m_transferTable->setRowHeight(row, 42);
     m_transferTable->setCellWidget(row, 6, makeProgressCell(transfer.progress));
     m_transferTable->setCellWidget(row, 8, makeActionCell(transfer));
 }
@@ -152,11 +167,17 @@ QWidget *MainWindow::makeActionCell(const TransferView &transfer)
 
     const bool incomingPending = transfer.direction == TransferDirection::Download
         && transfer.state == TransferState::Waiting;
+    auto styleActionButton = [](QPushButton *button) {
+        button->setObjectName(QStringLiteral("transferActionButton"));
+        button->setFixedHeight(28);
+        button->setMinimumWidth(52);
+    };
+
     if (incomingPending) {
         auto *acceptButton = new QPushButton(QStringLiteral("接收"), container);
         auto *rejectButton = new QPushButton(QStringLiteral("拒绝"), container);
-        acceptButton->setMinimumWidth(58);
-        rejectButton->setMinimumWidth(58);
+        styleActionButton(acceptButton);
+        styleActionButton(rejectButton);
 
         connect(acceptButton, &QPushButton::clicked, this, [this, transferId = transfer.transferId]() {
             acceptPendingTransfer(transferId);
@@ -171,7 +192,7 @@ QWidget *MainWindow::makeActionCell(const TransferView &transfer)
     }
 
     auto *cancelButton = new QPushButton(QStringLiteral("取消"), container);
-    cancelButton->setMinimumWidth(58);
+    styleActionButton(cancelButton);
     const bool canCancel = transfer.state == TransferState::Waiting
         || transfer.state == TransferState::Transferring;
     cancelButton->setEnabled(canCancel);

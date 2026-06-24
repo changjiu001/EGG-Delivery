@@ -134,6 +134,7 @@ void LanNetworkClient::sendPendingChunks()
             transfer.view.state = TransferState::Failed;
             transfer.view.message = QStringLiteral("发送分块失败");
             emitTransfer(transfer.view);
+            cleanupOutgoingTempFile(transfer);
             m_outgoingTransfers.remove(transferId);
             continue;
         }
@@ -157,6 +158,7 @@ void LanNetworkClient::sendPendingChunks()
             transfer.view.state = TransferState::Finished;
             transfer.view.message = QStringLiteral("发送完成");
             emitTransfer(transfer.view);
+            cleanupOutgoingTempFile(transfer);
             m_outgoingTransfers.remove(transferId);
         }
     }

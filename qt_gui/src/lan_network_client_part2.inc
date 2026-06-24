@@ -19,6 +19,90 @@
     }
 }
 
+
+
+void LanNetworkClient::sendFolder(const QString &peerId, const QString &folderPath)
+{
+    if (!m_running) {
+        emit errorOccurred(QStringLiteral("请先启动局域网客户端"));
+        return;
+    }
+
+    if (!m_peers.contains(peerId)) {
+        emit errorOccurred(QStringLiteral("未找到目标用户"));
+        return;
+    }
+
+    const QFileInfo folderInfo(folderPath);
+    if (!folderInfo.exists() || !folderInfo.isDir()) {
+        emit errorOccurred(QStringLiteral("文件夹不存在：%1").arg(folderPath));
+        return;
+    }
+
+    QString packError;
+    const QString tempRoot = QDir::temp().absoluteFilePath(
+        QStringLiteral("eggdelivery_pack_%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
+    QDir().mkpath(tempRoot);
+
+    const QString zipPath = FolderPacker::packToZip(folderPath, tempRoot, &packError);
+    if (zipPath.isEmpty()) {
+        QDir(tempRoot).removeRecursively();
+        emit errorOccurred(packError.isEmpty()
+                               ? QStringLiteral("文件夹打包失败")
+                               : packError);
+        return;
+    }
+
+    const QFileInfo zipInfo(zipPath);
+    auto chunks = m_fileManager.readAndChunkFile(zipPath.toStdString());
+    if (chunks.empty()) {
+        QDir(tempRoot).removeRecursively();
+        emit errorOccurred(QStringLiteral("文件夹打包后分块失败：%1").arg(zipPath));
+        return;
+    }
+
+    const QString transferId = QString::fromStdString(chunks.front().file_hash);
+    if (m_outgoingTransfers.contains(transferId)) {
+        QDir(tempRoot).removeRecursively();
+        emit errorOccurred(QStringLiteral("该文件夹正在传输中"));
+        return;
+    }
+
+    const QString displayName = folderInfo.fileName() + QStringLiteral(".zip");
+
+    TransferView view;
+    view.transferId = transferId;
+    view.peerId = peerId;
+    view.peerName = peerName(peerId);
+    view.fileName = displayName;
+    view.localPath = folderInfo.absoluteFilePath();
+    view.fileSize = zipInfo.size();
+    view.direction = TransferDirection::Upload;
+    view.state = TransferState::Waiting;
+    view.progress = 0;
+    view.message = QStringLiteral("等待对方接收");
+    OutgoingTransfer transfer;
+    transfer.view = view;
+    transfer.chunks = std::move(chunks);
+    transfer.tempZipPath = zipPath;
+    m_outgoingTransfers.insert(transferId, std::move(transfer));
+    emitTransfer(view);
+
+    QJsonObject header;
+    header["transferId"] = transferId;
+    header["fileName"] = displayName;
+    header["fileSize"] = QString::number(zipInfo.size());
+    header["totalChunks"] = static_cast<int>(m_outgoingTransfers[transferId].chunks.size());
+
+    if (!sendToPeer(peerId, makeMessage(WireMessageType::FileStart, header))) {
+        TransferView failed = view;
+        failed.state = TransferState::Failed;
+        failed.message = QStringLiteral("发送文件夹请求失败");
+        const OutgoingTransfer outgoing = m_outgoingTransfers.take(transferId);
+        cleanupOutgoingTempFile(outgoing);
+        emitTransfer(failed);
+    }
+}
 void LanNetworkClient::acceptFile(const QString &transferId)
 {
     if (!m_pendingIncomingOffers.contains(transferId)) {
@@ -70,6 +154,7 @@ void LanNetworkClient::cancelTransfer(const QString &transferId)
 {
     if (m_outgoingTransfers.contains(transferId)) {
         OutgoingTransfer transfer = m_outgoingTransfers.take(transferId);
+        cleanupOutgoingTempFile(transfer);
         transfer.view.state = TransferState::Cancelled;
         transfer.view.message = QStringLiteral("已取消发送");
         emitTransfer(transfer.view);
